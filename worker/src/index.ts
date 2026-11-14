@@ -5,7 +5,7 @@
  * Защита без сторонних скриптов на сайте: проверка Origin, поле-ловушка, минимальное время
  * заполнения, лимит запросов с IP и повторная проверка всех полей и расписания.
  */
-import { formatMessage, orderNumber, validate, widgetCaption, widgetData } from '../../src/date/schema'
+import { formatMessage, messageButtons, orderNumber, validate, widgetCaption, widgetData } from '../../src/date/schema'
 // HTML-виджет «чек из чайной»; wrangler импортирует .html как строку
 import WIDGET_HTML from './widget.html'
 
@@ -64,8 +64,8 @@ export default {
     const { data, errors } = validate(body)
     if (Object.keys(errors).length) return json({ error: 'invalid', fields: errors }, 422, cors)
 
-    const text = formatMessage(data)
     const no = orderNumber()
+    const text = formatMessage(data, no)
     const widget = { chat_id: env.TELEGRAM_CHAT_ID, html: WIDGET_HTML, chat_data: widgetData(data, no), caption: widgetCaption(data, no) }
     if (env.DRY_RUN === '1') return json({ ok: true, preview: text, widget: { chat_data: widget.chat_data, caption: widget.caption } }, 200, cors)
 
@@ -75,7 +75,7 @@ export default {
       if (res.ok) return json({ ok: true }, 200, cors)
       console.error('sendWidget', res.status, await res.text())
     }
-    const res = await tg(env, 'sendMessage', { chat_id: env.TELEGRAM_CHAT_ID, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true } })
+    const res = await tg(env, 'sendMessage', { chat_id: env.TELEGRAM_CHAT_ID, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: messageButtons(data) })
     if (!res.ok) {
       console.error('sendMessage', res.status, await res.text())
       return json({ error: 'telegram' }, 502, cors)

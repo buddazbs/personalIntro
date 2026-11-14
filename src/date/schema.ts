@@ -84,24 +84,44 @@ export const formatLabel = (r: DateRequest) => (r.format === 'own' ? r.formatOwn
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-/** Обычное текстовое сообщение (parse_mode=HTML) — запасной вариант, если виджет не отправился */
-export function formatMessage(r: DateRequest) {
+/** Номер «заказа»: 4 цифры от времени отправки — для шутки, не уникален */
+export const orderNumber = (now = Date.now()) => String(Math.floor(now / 1000) % 10000).padStart(4, '0')
+
+/** Время оформления «заказа» по Москве: «15.11 · 00:09» */
+const orderedAt = (now: number) => {
+  const { date, minutes } = mskNow(now)
+  return `${date.slice(8, 10)}.${date.slice(5, 7)} · ${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+}
+
+const RULE = '┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈'
+
+/**
+ * Текстовое сообщение-«чек» (parse_mode=HTML). Отправляется, когда виджет недоступен,
+ * и служит текстом для ссылки «написать напрямую» на сайте.
+ */
+export function formatMessage(r: DateRequest, no = orderNumber(), now = Date.now()) {
   const nick = normalizeNick(r.nick) ?? r.nick
   const lines = [
-    '🍵 <b>Запись на свидание</b>',
-    '',
-    `<b>От:</b> <a href="https://t.me/${esc(nick.slice(1))}">${esc(nick)}</a>${r.name ? ` · ${esc(r.name)}` : ''}`,
-    `<b>Когда:</b> ${esc(humanDate(r.date))}, ${esc(r.time)} (${TZ_LABEL})`,
-    `<b>Формат:</b> ${r.format === 'own' ? 'свой вариант — ' : ''}${esc(formatLabel(r))}`,
-    `<b>Кухня:</b> ${esc(r.cuisines.join(', '))}`,
+    '🍵 <b>ЧАЙНАЯ «ДВОЕ»</b>',
+    `<i>заказ № ${no} · ${orderedAt(now)}</i>`,
+    RULE,
+    `👤 <b>Гость:</b> ${r.name ? `${esc(r.name)} · ` : ''}<a href="https://t.me/${esc(nick.slice(1))}">${esc(nick)}</a>`,
+    `🗓 <b>Когда:</b> ${esc(humanDate(r.date))} · ${esc(r.time)} <i>(${TZ_LABEL})</i>`,
+    r.format === 'own' ? `✨ <b>Свой вариант:</b> ${esc(formatLabel(r))}` : `🫖 <b>Формат:</b> ${esc(formatLabel(r))}`,
+    `🍽 <b>Кухня:</b> ${esc(r.cuisines.join(', '))}`,
   ]
-  if (r.avoid) lines.push(`<b>Не ест:</b> ${esc(r.avoid)}`)
-  if (r.note) lines.push('', `<i>«${esc(r.note)}»</i>`)
+  if (r.avoid) lines.push(`🚫 <b>Без:</b> ${esc(r.avoid)}`)
+  if (r.note) lines.push(`<blockquote><i>«${esc(r.note)}»</i></blockquote>`)
+  else lines.push('')
+  lines.push(RULE, '<b>ИТОГО:</b> 1 вечер ♡', '<i>оплата — хорошим настроением</i>')
   return lines.join('\n')
 }
 
-/** Номер «заказа»: 4 цифры от времени отправки — для шутки, не уникален */
-export const orderNumber = (now = Date.now()) => String(Math.floor(now / 1000) % 10000).padStart(4, '0')
+/** Кнопка под сообщением: сразу в чат с ней */
+export const messageButtons = (r: DateRequest) => {
+  const nick = normalizeNick(r.nick) ?? r.nick
+  return { inline_keyboard: [[{ text: `✉️ Написать ${nick}`, url: `https://t.me/${nick.slice(1)}` }]] }
+}
 
 /** Короткая подпись под виджетом — её же видно в уведомлении */
 export const widgetCaption = (r: DateRequest, no: string) => `🍵 Заказ №${no} от ${normalizeNick(r.nick) ?? r.nick} — ${humanDate(r.date)}, ${r.time}`
