@@ -26,8 +26,10 @@ function Card({ src, depth, total, index, onSwipe }: { src: string; depth: numbe
   }
 
   return (
-    // внешний слой — поза в стопке, внутренний — перетаскивание
-    <motion.div className="absolute inset-0" style={{ zIndex: total - depth }} initial={false} animate={pose} transition={{ duration: 0.8, ease: EASE }} aria-hidden={!isTop}>
+    // внешний слой — поза в стопке, внутренний — перетаскивание.
+    // z разводит карточки по глубине: в preserve-3d порядок решает глубина, а не z-index,
+    // иначе при наклоне стопки клики и курсор «проваливаются» на нижнюю карточку
+    <motion.div className="absolute inset-0" style={{ zIndex: total - depth }} initial={false} animate={{ ...pose, z: -depth * 6 }} transition={{ duration: 0.8, ease: EASE }} aria-hidden={!isTop}>
       <motion.div
         className="absolute inset-0 touch-pan-y overflow-hidden rounded-[2rem] border border-line bg-ink-3 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.8)] select-none"
         style={{ x, rotate: rotateDrag }}
