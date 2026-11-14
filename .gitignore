@@ -1,8 +1,14 @@
+# зависимости и сборка
 node_modules
 dist
-.DS_Store
-.idea
-.claude
-*.local
-.shots
 *.tsbuildinfo
+*.local
+
+# все служебные папки, начинающиеся с точки (.idea, .claude, .agents, .shots …)
+.*/
+# кроме workflow деплоя — без него не будет автодеплоя на GitHub Pages
+!.github/
+
+# файлы, не относящиеся к проекту
+.DS_Store
+skills-lock.json

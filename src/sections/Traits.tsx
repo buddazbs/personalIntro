@@ -1,10 +1,11 @@
 import { motion, useMotionTemplate, useMotionValue, useScroll, useSpring, useTransform, type MotionValue } from 'motion/react'
 import { useLayoutEffect, useRef, useState, type PointerEvent } from 'react'
-import { traits, type Trait } from '../content'
+import { quotes, traits, type Trait } from '../content'
 import { accentColor, C } from '../lib/colors'
 import { Reveal, SectionHeading } from '../components/Reveal'
 import { Spotlight } from '../components/Spotlight'
 import { Counter } from '../components/Counter'
+import { Ghost } from '../components/Ghost'
 import { TraitGlyph } from '../components/Art'
 import { useFinePointer, useMedia } from '../hooks/useMedia'
 
@@ -139,7 +140,8 @@ function Deck() {
 export function Traits() {
   const deck = useMedia('(min-width: 1024px) and (min-height: 700px)')
   return (
-    <section id="traits" className="relative mx-auto max-w-7xl scroll-mt-24 px-5 pt-24 pb-10 sm:px-8 md:pt-32">
+    <section id="traits" className="relative isolate mx-auto max-w-7xl scroll-mt-24 px-5 pt-24 pb-10 sm:px-8 md:pt-32">
+      <Ghost text={quotes[2]} className="top-0" />
       <SectionHeading kicker="03 — характер" title="как со мной рядом" />
 
       <div className="mt-16 grid grid-cols-12 gap-3 md:gap-4">

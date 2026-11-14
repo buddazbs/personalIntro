@@ -1,10 +1,11 @@
 import { motion, useScroll, useTransform, type MotionValue } from 'motion/react'
 import { useRef, useState, type PointerEvent } from 'react'
-import { privacyChips, socials } from '../content'
+import { privacyChips, quotes, socials } from '../content'
 import { accentColor, C, EASE } from '../lib/colors'
 import { Reveal, SectionHeading } from '../components/Reveal'
 import { Magnetic } from '../components/Magnetic'
 import { Signature } from '../components/Signature'
+import { Ghost } from '../components/Ghost'
 import { useScrollTo } from '../lib/lenis'
 
 const icons = {
@@ -83,7 +84,8 @@ function SocialCard({ s }: { s: Social }) {
 
 export function Contact() {
   return (
-    <section id="contact" className="relative mx-auto max-w-7xl scroll-mt-24 px-5 pt-24 pb-16 sm:px-8 md:pt-32 md:pb-20">
+    <section id="contact" className="relative isolate mx-auto max-w-7xl scroll-mt-24 px-5 pt-24 pb-16 sm:px-8 md:pt-32 md:pb-20">
+      <Ghost text={quotes[3]} className="top-1/3" dir={-1} outline />
       <SectionHeading kicker="04 — связь" title="напиши, если откликнулось" />
       <Reveal delay={0.1}>
         <p className="mt-10 max-w-2xl text-[1.05rem] leading-relaxed text-cream-2">

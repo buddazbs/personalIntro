@@ -1,11 +1,9 @@
 import { MotionConfig } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
-import { quotes } from './content'
 import { LenisProvider, useLenis } from './lib/lenis'
 import { usePageVisibility } from './hooks/usePageVisibility'
 import { Preloader } from './components/Preloader'
 import { Cursor } from './components/Cursor'
-import { Marquee } from './components/Marquee'
 import { LeafField } from './components/LeafField'
 import { TeaSurface } from './components/TeaSurface'
 import { Nav, PrivacyPill, ScrollProgress } from './components/Chrome'
@@ -50,14 +48,12 @@ function Page() {
           </div>
 
           <div className="relative">
-            <Marquee items={quotes} className="pt-10 pb-6 text-[clamp(2rem,5vw,4rem)] text-cream/80" />
             <About />
             <TeaSurface />
             <Manifesto />
             <Interests />
             <TeaSurface />
             <Traits />
-            <Marquee items={[...quotes].reverse()} baseVelocity={1.6} className="py-4 text-[clamp(1.5rem,3.5vw,2.75rem)] text-mute" />
             <Contact />
             <Footer />
           </div>

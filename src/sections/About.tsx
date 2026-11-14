@@ -1,15 +1,17 @@
 import { motion, useScroll, useTransform, type MotionValue } from 'motion/react'
 import { useRef } from 'react'
-import { now, stats } from '../content'
+import { now, quotes, stats } from '../content'
 import { EASE } from '../lib/colors'
 import { Reveal, SectionHeading } from '../components/Reveal'
 import { Spotlight } from '../components/Spotlight'
 import { TeaBowl } from '../components/TeaBowl'
 import { Counter } from '../components/Counter'
+import { Ghost } from '../components/Ghost'
 
 export function About() {
   return (
-    <section id="about" className="relative mx-auto max-w-7xl scroll-mt-24 px-5 pt-24 pb-16 sm:px-8 md:pt-32 md:pb-24">
+    <section id="about" className="relative isolate mx-auto max-w-7xl scroll-mt-24 px-5 pt-24 pb-16 sm:px-8 md:pt-32 md:pb-24">
+      <Ghost text={quotes[0]} className="top-0" dir={-1} />
       <SectionHeading kicker="01 — обо мне" title="между ритуалом и кодом" />
 
       <div className="mt-16 grid grid-cols-12 gap-3 md:gap-4">
@@ -133,7 +135,8 @@ export function Manifesto() {
   const step = 1 / all.length
 
   return (
-    <section aria-label="Философия" className="relative mx-auto max-w-6xl px-5 py-16 sm:px-8 md:py-28">
+    <section aria-label="Философия" className="relative isolate mx-auto max-w-6xl px-5 py-16 sm:px-8 md:py-28">
+      <Ghost text={quotes[1]} className="bottom-0" outline />
       <motion.div
         aria-hidden
         className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[40rem] w-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(235,203,130,0.16),transparent_60%)] blur-2xl"
