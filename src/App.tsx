@@ -2,12 +2,15 @@ import { MotionConfig } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
 import { quotes } from './content'
 import { LenisProvider, useLenis } from './lib/lenis'
-import { useDayPalette } from './lib/day'
+import { usePageVisibility } from './hooks/usePageVisibility'
 import { Preloader } from './components/Preloader'
-import { Nav, PrivacyNote } from './components/Chrome'
-import { Interlude } from './components/Section'
+import { Cursor } from './components/Cursor'
+import { Marquee } from './components/Marquee'
+import { LeafField } from './components/LeafField'
+import { TeaSurface } from './components/TeaSurface'
+import { Nav, PrivacyPill, ScrollProgress } from './components/Chrome'
 import { Hero } from './sections/Hero'
-import { About, Philosophy } from './sections/About'
+import { About, Manifesto } from './sections/About'
 import { Interests } from './sections/Interests'
 import { Traits } from './sections/Traits'
 import { Contact, Footer } from './sections/Contact'
@@ -15,7 +18,7 @@ import { Contact, Footer } from './sections/Contact'
 function Page() {
   const [ready, setReady] = useState(false)
   const lenis = useLenis()
-  const tea = useDayPalette()
+  usePageVisibility()
 
   // пока заваривается — страница не листается
   useEffect(() => {
@@ -24,7 +27,6 @@ function Page() {
   }, [ready, lenis])
 
   const onDone = useCallback(() => setReady(true), [])
-  const [q0, q1, q2, q3] = quotes
 
   return (
     <div id="top" className="relative overflow-x-clip">
@@ -32,24 +34,38 @@ function Page() {
         Перейти к содержимому
       </a>
       <Preloader onDone={onDone} />
-      <Nav ready={ready} tea={tea} />
+      <Cursor />
+      <ScrollProgress />
+      <Nav ready={ready} />
 
       <main id="main">
         <Hero ready={ready} />
-        {q0 && <Interlude>{q0}</Interlude>}
-        <About />
-        {q1 && <Interlude>{q1}</Interlude>}
-        <Philosophy />
-        <Interests />
-        {q2 && <Interlude>{q2}</Interlude>}
-        <Traits />
-        {q3 && <Interlude>{q3}</Interlude>}
-        <Contact />
+
+        {/* контент наезжает на закреплённый первый экран, как новая карточка */}
+        <div className="relative z-10 -mt-12 rounded-t-[2.5rem] md:-mt-[70svh] bg-ink shadow-[0_-30px_80px_-20px_rgba(0,0,0,0.7)] md:rounded-t-[3.5rem]">
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-[inherit] bg-gradient-to-r from-transparent via-matcha/50 to-transparent" />
+          {/* чаинки летят на фоне всего контента */}
+          <div aria-hidden className="pointer-events-none sticky top-0 -mb-[100svh] h-svh">
+            <LeafField />
+          </div>
+
+          <div className="relative">
+            <Marquee items={quotes} className="pt-10 pb-6 text-[clamp(2rem,5vw,4rem)] text-cream/80" />
+            <About />
+            <TeaSurface />
+            <Manifesto />
+            <Interests />
+            <TeaSurface />
+            <Traits />
+            <Marquee items={[...quotes].reverse()} baseVelocity={1.6} className="py-4 text-[clamp(1.5rem,3.5vw,2.75rem)] text-mute" />
+            <Contact />
+            <Footer />
+          </div>
+        </div>
       </main>
 
-      <Footer />
-      <PrivacyNote ready={ready} />
-      <div className="paper" aria-hidden />
+      <PrivacyPill ready={ready} />
+      <div className="grain" aria-hidden />
     </div>
   )
 }

@@ -1,8 +1,8 @@
 # personalIntro
 
-Личная страничка-знакомство. Страница — один день чая: при прокрутке цвет меняется от утреннего сэнтя к дневной габе и вечернему дянь хуну.
+Личная страничка-знакомство в эстетике «вечерней чайной».
 
-Vite + React 19 + TypeScript + Tailwind v4, анимации на `motion`, плавный скролл на `lenis`, шрифт Literata.
+Vite + React 19 + TypeScript + Tailwind v4, анимации на `motion`, плавный скролл на `lenis`, фон первого экрана — самописный WebGL-шейдер, чаинки — canvas 2D. Шрифты Cormorant и Manrope.
 
 ## Команды
 
@@ -19,8 +19,9 @@ npm run preview   # посмотреть прод-сборку
 | --- | --- |
 | Тексты, интересы, черты, соцсети | `src/content.ts` |
 | Фотографии (подхватываются автоматически, по имени) | `src/assets/avatars/*.jpg` |
-| Цвета трёх чаёв и точки перехода | `src/lib/day.ts` |
-| Шрифт, типографская шкала | `src/styles.css` |
+| Цвета и шрифты | `src/styles.css` (`@theme`) и `src/lib/colors.ts` |
+| Шейдер «чернила матчи» | `src/components/InkShader.tsx` |
+| Чаинки на фоне | `src/components/LeafField.tsx` |
 
 ## Деплой
 

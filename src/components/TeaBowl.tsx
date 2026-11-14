@@ -1,109 +1,122 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useId, useState } from 'react'
-import { EASE } from '../lib/motion'
+import { C, EASE } from '../lib/colors'
 
+const WAVE_FRONT = 'M-85 178 Q -50 170, -15 178 T 55 178 T 125 178 T 195 178 T 265 178 T 335 178 T 405 178 T 475 178 L 475 260 L -85 260 Z'
+const WAVE_BACK = 'M-85 174 Q -50 182, -15 174 T 55 174 T 125 174 T 195 174 T 265 174 T 335 174 T 405 174 T 475 174 L 475 230 L -85 230 Z'
 const BOWL = 'M70 160 C 80 280, 130 320, 200 322 C 270 320, 320 280, 330 160 Z'
-const WAVE = 'M-85 178 Q -50 172, -15 178 T 55 178 T 125 178 T 195 178 T 265 178 T 335 178 T 405 178 T 475 178 L 475 260 L -85 260 Z'
-// потёки глазури тенмоку по краю чаши
-const DRIP =
-  'M72 166 C 72 160, 328 160, 328 166 L 327 174 C 316 176, 312 186, 306 176 C 270 178, 240 176, 214 178 C 206 186, 200 186, 196 178 C 160 178, 120 176, 96 176 C 90 184, 84 184, 80 175 Z'
 
-/** Чаша: нажал — налили сэнтя, нажал ещё раз — выпили. */
+/** Интерактивная чаша: клик — наливаем чай, ещё клик — пьём */
 export function TeaBowl({ className = '' }: { className?: string }) {
   const id = useId().replace(/:/g, '')
   const [filled, setFilled] = useState(false)
   const [pours, setPours] = useState(0)
 
   return (
-    <div className={`flex flex-col items-center ${className}`}>
-      <button
-        type="button"
-        onClick={() => {
-          setFilled((f) => !f)
-          setPours((p) => p + 1)
-        }}
-        aria-pressed={filled}
-        className="group w-full rounded-full"
-      >
-        <span className="sr-only">{filled ? 'Выпить чай' : 'Налить чай'}</span>
-        <motion.svg
-          viewBox="0 0 400 360"
-          className="h-auto w-full overflow-visible"
-          aria-hidden
-          whileHover={{ rotate: -2 }}
-          whileTap={{ scale: 0.97 }}
-          transition={{ type: 'spring', stiffness: 220, damping: 16 }}
-        >
-          <defs>
-            <linearGradient id={`${id}-glaze`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#F7F2E3" />
-              <stop offset="70%" stopColor="#E3D6BA" />
-              <stop offset="100%" stopColor="#C4AF8A" />
-            </linearGradient>
-            <linearGradient id={`${id}-tea`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#B7BF5E" />
-              <stop offset="100%" stopColor="#6E7F2E" />
-            </linearGradient>
-            <clipPath id={`${id}-clip`}>
-              <path d={BOWL} />
-            </clipPath>
-          </defs>
+    <button
+      type="button"
+      onClick={() => {
+        setFilled((f) => !f)
+        setPours((p) => p + 1)
+      }}
+      aria-pressed={filled}
+      aria-label={filled ? 'Выпить чай' : 'Налить чай'}
+      data-cursor={filled ? 'выпить' : 'налить'}
+      className={`group relative ${className}`}
+    >
+      <motion.svg viewBox="0 0 400 400" className="h-full w-full overflow-visible" aria-hidden whileHover={{ rotate: -3, y: -6 }} whileTap={{ scale: 0.96 }} transition={{ type: 'spring', stiffness: 200, damping: 14 }}>
+        <defs>
+          <radialGradient id={`${id}-inner`} cx="50%" cy="20%" r="70%">
+            <stop offset="0%" stopColor={C.matcha} />
+            <stop offset="55%" stopColor={C.matchaDeep} />
+            <stop offset="100%" stopColor={C.matchaDark} />
+          </radialGradient>
+          <linearGradient id={`${id}-body`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#EFE4CF" />
+            <stop offset="60%" stopColor="#C9AE86" />
+            <stop offset="100%" stopColor="#8C7253" />
+          </linearGradient>
+          <radialGradient id={`${id}-glow`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={C.matcha} stopOpacity="0.45" />
+            <stop offset="100%" stopColor={C.matcha} stopOpacity="0" />
+          </radialGradient>
+          <clipPath id={`${id}-clip`}>
+            <path d={BOWL} />
+          </clipPath>
+        </defs>
 
-          {/* пар */}
+        <motion.circle cx="200" cy="230" r="190" fill={`url(#${id}-glow)`} animate={{ opacity: filled ? 1 : 0.35, scale: filled ? 1.05 : 0.9 }} transition={{ duration: 1.6, ease: EASE }} />
+        <text x="345" y="90" fontSize="72" textAnchor="middle" fill={C.cream} opacity="0.12" className="font-serif">
+          茶
+        </text>
+
+        {filled &&
+          [0, 1, 2, 3].map((i) => (
+            <motion.path
+              key={`${pours}-${i}`}
+              d={`M${150 + i * 32} 140 C ${144 + i * 32} 108, ${166 + i * 32} 96, ${156 + i * 32} 64 S ${146 + i * 32} 28, ${162 + i * 32} -4`}
+              stroke={C.cream}
+              strokeOpacity={0.35}
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              fill="none"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: [0, 1, 1], opacity: [0, 0.9, 0], y: [10, 0, -14] }}
+              transition={{ duration: 3.2, delay: 1.6 + i * 0.45, repeat: Infinity, ease: 'easeOut' }}
+            />
+          ))}
+
+        <AnimatePresence>
+          {filled && (
+            <motion.line
+              key={`stream-${pours}`}
+              x1="200"
+              y1="40"
+              x2="200"
+              y2="200"
+              stroke={C.matcha}
+              strokeWidth="8"
+              strokeLinecap="round"
+              initial={{ pathLength: 0, pathOffset: 0 }}
+              animate={{ pathLength: [0, 1, 1, 0], pathOffset: [0, 0, 0, 1] }}
+              transition={{ duration: 1.9, times: [0, 0.25, 0.7, 1], ease: 'easeInOut' }}
+            />
+          )}
+        </AnimatePresence>
+
+        <path d={BOWL} fill={`url(#${id}-body)`} />
+        <g clipPath={`url(#${id}-clip)`}>
+          <motion.g initial={false} animate={{ y: filled ? 0 : 170 }} transition={{ duration: filled ? 1.5 : 1.1, delay: filled ? 0.35 : 0, ease: EASE }}>
+            <rect x="55" y="182" width="290" height="160" fill={`url(#${id}-inner)`} />
+            <motion.path d={WAVE_BACK} fill="#D9E8C8" opacity={0.3} animate={{ x: [0, 140] }} transition={{ duration: 4, repeat: Infinity, ease: 'linear' }} />
+            <motion.path d={WAVE_FRONT} fill={C.matcha} opacity={0.9} animate={{ x: [0, -140] }} transition={{ duration: 3, repeat: Infinity, ease: 'linear' }} />
+          </motion.g>
           {filled &&
             [0, 1, 2].map((i) => (
-              <motion.path
-                key={`${pours}-${i}`}
-                d={`M${165 + i * 35} 140 C ${159 + i * 35} 108, ${181 + i * 35} 96, ${171 + i * 35} 64 S ${161 + i * 35} 28, ${177 + i * 35} -4`}
-                stroke="var(--fg)"
-                strokeOpacity={0.4}
-                strokeWidth={2}
-                strokeLinecap="round"
+              <motion.ellipse
+                key={`${pours}-r${i}`}
+                cx="200"
+                cy="188"
+                rx="30"
+                ry="6"
                 fill="none"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: [0, 1, 1], opacity: [0, 0.9, 0], y: [8, 0, -12] }}
-                transition={{ duration: 3.4, delay: 1.5 + i * 0.5, repeat: 2, ease: 'easeOut' }}
+                stroke="#E6F0D8"
+                strokeWidth="1.5"
+                initial={{ scale: 0.2, opacity: 0 }}
+                animate={{ scale: [0.2, 3], opacity: [0.9, 0] }}
+                transition={{ duration: 1.6, delay: 0.5 + i * 0.35, ease: 'easeOut' }}
               />
             ))}
+        </g>
+        <path d="M95 190 C 105 250, 130 285, 160 300" stroke="#fff" strokeOpacity="0.35" strokeWidth="5" strokeLinecap="round" fill="none" />
+        <path d={BOWL} fill="none" stroke="#000" strokeOpacity="0.25" strokeWidth="1.5" />
+        <ellipse cx="200" cy="160" rx="130" ry="9" fill="none" stroke="#F3EBDD" strokeOpacity="0.5" strokeWidth="2" />
+        <ellipse cx="200" cy="338" rx="105" ry="8" fill="#000" opacity="0.35" />
+      </motion.svg>
 
-          {/* струя */}
-          <AnimatePresence>
-            {filled && (
-              <motion.line
-                key={`stream-${pours}`}
-                x1="200"
-                y1="30"
-                x2="200"
-                y2="196"
-                stroke="#8E9C3E"
-                strokeWidth="7"
-                strokeLinecap="round"
-                initial={{ pathLength: 0, pathOffset: 0 }}
-                animate={{ pathLength: [0, 1, 1, 0], pathOffset: [0, 0, 0, 1] }}
-                transition={{ duration: 1.8, times: [0, 0.25, 0.7, 1], ease: 'easeInOut' }}
-              />
-            )}
-          </AnimatePresence>
-
-          <path d={BOWL} fill={`url(#${id}-glaze)`} />
-
-          <g clipPath={`url(#${id}-clip)`}>
-            <motion.g initial={false} animate={{ y: filled ? 0 : 170 }} transition={{ duration: filled ? 1.4 : 1, delay: filled ? 0.35 : 0, ease: EASE }}>
-              <rect x="55" y="182" width="290" height="160" fill={`url(#${id}-tea)`} />
-              <motion.path d={WAVE} fill="#C9CF7A" animate={{ x: [0, -140] }} transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }} />
-            </motion.g>
-            <path d={DRIP} fill="#7A5A3A" opacity="0.75" />
-          </g>
-
-          <path d="M98 200 C 108 252, 132 284, 160 300" stroke="#fff" strokeOpacity="0.55" strokeWidth="4" strokeLinecap="round" fill="none" />
-          <path d={BOWL} fill="none" stroke="var(--fg)" strokeOpacity="0.55" strokeWidth="1.5" />
-          <ellipse cx="200" cy="160" rx="130" ry="8" fill="none" stroke="var(--fg)" strokeOpacity="0.45" strokeWidth="1.5" />
-          <path d="M150 322 L 152 336 L 248 336 L 250 322" fill="#C4AF8A" stroke="var(--fg)" strokeOpacity="0.45" strokeWidth="1.5" />
-        </motion.svg>
-      </button>
-      <span className="mt-4 text-small text-muted italic" aria-hidden>
-        {filled ? 'Нажми ещё раз, чтобы выпить' : 'Нажми на чашу, чтобы налить чай'}
+      <span className="kicker absolute top-[92%] left-1/2 -translate-x-1/2 rounded-full border border-line bg-ink/60 px-3 py-1.5 text-[0.6rem] whitespace-nowrap text-cream-2 backdrop-blur transition-colors group-hover:border-matcha/50 group-hover:text-matcha" aria-hidden>
+        {filled ? 'ещё раз?' : 'налить чай'}
       </span>
-    </div>
+    </button>
   )
 }

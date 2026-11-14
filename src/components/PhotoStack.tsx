@@ -1,45 +1,44 @@
-import { motion, useMotionValue, useTransform, type PanInfo } from 'motion/react'
-import { useCallback, useState, type KeyboardEvent } from 'react'
-import { EASE } from '../lib/motion'
+import { motion, useMotionValue, useSpring, useTransform, type PanInfo } from 'motion/react'
+import { useCallback, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import { EASE } from '../lib/colors'
+import { useFinePointer } from '../hooks/useMedia'
 
 const photos = Object.entries(import.meta.glob<string>('../assets/avatars/*.jpg', { eager: true, import: 'default' }))
   .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
   .map(([, src]) => src)
 
-// как лежат отпечатки в стопке: верхний ровно, нижние чуть сдвинуты
+// положение карточки в стопке по её глубине
 const POSE = [
-  { rotate: -1.5, x: 0, y: 0 },
-  { rotate: 4, x: 22, y: 8 },
-  { rotate: -6, x: -18, y: 14 },
-  { rotate: 2, x: 8, y: 22 },
+  { rotate: 0, scale: 1, y: 0, x: 0 },
+  { rotate: -7, scale: 0.94, y: 10, x: -34 },
+  { rotate: 8, scale: 0.9, y: 22, x: 36 },
+  { rotate: -3, scale: 0.86, y: 40, x: 4 },
 ] as const
 
-function Print({ src, index, depth, total, onSwipe }: { src: string; index: number; depth: number; total: number; onSwipe: (dir: 1 | -1) => void }) {
+function Card({ src, depth, total, index, onSwipe }: { src: string; depth: number; total: number; index: number; onSwipe: (dir: 1 | -1) => void }) {
   const x = useMotionValue(0)
-  const tilt = useTransform(x, [-200, 200], [-10, 10])
+  const rotateDrag = useTransform(x, [-220, 220], [-14, 14])
   const isTop = depth === 0
   const pose = POSE[Math.min(depth, POSE.length - 1)] ?? POSE[0]
 
   const onDragEnd = (_: unknown, info: PanInfo) => {
-    if (Math.abs(info.offset.x) > 80 || Math.abs(info.velocity.x) > 500) onSwipe(info.offset.x < 0 ? 1 : -1)
+    if (Math.abs(info.offset.x) > 90 || Math.abs(info.velocity.x) > 600) onSwipe(info.offset.x < 0 ? 1 : -1)
   }
 
   return (
-    <motion.div
-      className="absolute inset-0"
-      style={{ zIndex: total - depth }}
-      initial={false}
-      animate={pose}
-      transition={{ duration: 0.7, ease: EASE }}
-      aria-hidden={!isTop}
-    >
+    // внешний слой — поза в стопке, внутренний — перетаскивание
+    <motion.div className="absolute inset-0" style={{ zIndex: total - depth }} initial={false} animate={pose} transition={{ duration: 0.8, ease: EASE }} aria-hidden={!isTop}>
       <motion.div
-        className={`h-full touch-pan-y bg-paper p-2.5 pb-12 shadow-[0_1px_2px_rgb(41_35_26/0.18),0_24px_40px_-24px_rgb(41_35_26/0.55)] select-none sm:p-3 sm:pb-14 ${isTop ? 'cursor-grab active:cursor-grabbing' : ''}`}
-        style={{ x, rotate: tilt }}
+        className="absolute inset-0 touch-pan-y overflow-hidden rounded-[2rem] border border-line bg-ink-3 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.8)] select-none"
+        style={{ x, rotate: rotateDrag }}
+        animate={{ filter: `brightness(${1 - depth * 0.14})` }}
+        transition={{ duration: 0.8, ease: EASE }}
         drag={isTop ? 'x' : false}
         dragSnapToOrigin
-        dragElastic={0.8}
+        dragElastic={0.85}
         onDragEnd={onDragEnd}
+        whileDrag={{ scale: 1.03 }}
+        data-cursor={isTop ? 'тяни' : undefined}
       >
         <img
           src={src}
@@ -52,16 +51,39 @@ function Print({ src, index, depth, total, onSwipe }: { src: string; index: numb
           decoding="async"
           className="pointer-events-none h-full w-full object-cover"
         />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent" />
       </motion.div>
     </motion.div>
   )
 }
 
+const arrow = (d: string) => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+    <path d={d} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 export function PhotoStack() {
   const [order, setOrder] = useState(() => photos.map((_, i) => i))
+  const fine = useFinePointer()
   const next = useCallback(() => setOrder(([first, ...rest]) => (first === undefined ? rest : [...rest, first])), [])
   const prev = useCallback(() => setOrder((o) => [...o.slice(-1), ...o.slice(0, -1)]), [])
 
+  // 3D-наклон всей стопки за курсором
+  const rx = useMotionValue(0)
+  const ry = useMotionValue(0)
+  const srx = useSpring(rx, { stiffness: 120, damping: 18 })
+  const sry = useSpring(ry, { stiffness: 120, damping: 18 })
+  const onMove = (e: PointerEvent<HTMLDivElement>) => {
+    if (!fine) return
+    const r = e.currentTarget.getBoundingClientRect()
+    ry.set(((e.clientX - r.left) / r.width - 0.5) * 16)
+    rx.set(-((e.clientY - r.top) / r.height - 0.5) * 16)
+  }
+  const onLeave = () => {
+    rx.set(0)
+    ry.set(0)
+  }
   const onKey = (e: KeyboardEvent) => {
     if (e.key === 'ArrowRight') next()
     if (e.key === 'ArrowLeft') prev()
@@ -71,26 +93,44 @@ export function PhotoStack() {
   if (current === undefined) return null
 
   return (
-    <figure role="group" aria-roledescription="карусель" aria-label="Фотографии" tabIndex={0} onKeyDown={onKey} className="rounded-sm">
-      <div className="relative aspect-[4/5] w-full">
-        {order.map((photo, depth) => (
-          <Print key={photo} src={photos[photo] ?? ''} index={photo} depth={depth} total={photos.length} onSwipe={(d) => (d === 1 ? next() : prev())} />
-        ))}
+    <div className="relative w-full rounded-[2rem]" role="region" aria-roledescription="карусель" aria-label="Фотографии" tabIndex={0} onKeyDown={onKey}>
+      <div className="[perspective:1200px]" onPointerMove={onMove} onPointerLeave={onLeave}>
+        <motion.div className="relative aspect-[4/5] w-full [transform-style:preserve-3d]" style={{ rotateX: srx, rotateY: sry }}>
+          {order.map((photo, depth) => (
+            <Card key={photo} src={photos[photo] ?? ''} index={photo} depth={depth} total={photos.length} onSwipe={(d) => (d === 1 ? next() : prev())} />
+          ))}
+        </motion.div>
       </div>
 
       {photos.length > 1 && (
-        <figcaption className="mt-8 flex items-baseline justify-between text-small">
-          <button type="button" onClick={prev} className="link py-2">
-            Предыдущее
+        <div className="relative z-10 mt-10 flex items-center justify-between">
+          <button type="button" onClick={prev} aria-label="Предыдущее фото" className="glass grid h-11 w-11 place-items-center rounded-full text-cream transition-colors hover:bg-cream/10">
+            {arrow('M10 4 L6 8 L10 12')}
           </button>
-          <span className="text-muted tabular-nums italic" aria-live="polite">
-            {current + 1} из {photos.length}
-          </span>
-          <button type="button" onClick={next} className="link py-2">
-            Следующее
+          <div className="flex items-center gap-2" role="tablist" aria-label="Выбор фото">
+            {photos.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                role="tab"
+                aria-selected={i === current}
+                aria-label={`Фото ${i + 1}`}
+                onClick={() => setOrder((o) => [...o.slice(o.indexOf(i)), ...o.slice(0, o.indexOf(i))])}
+                className="grid h-6 place-items-center"
+              >
+                <motion.span
+                  className="block h-1.5 rounded-full"
+                  animate={{ width: i === current ? 28 : 6, backgroundColor: i === current ? '#A8C686' : 'rgba(243,235,221,0.25)' }}
+                  transition={{ duration: 0.5, ease: EASE }}
+                />
+              </button>
+            ))}
+          </div>
+          <button type="button" onClick={next} aria-label="Следующее фото" className="glass grid h-11 w-11 place-items-center rounded-full text-cream transition-colors hover:bg-cream/10">
+            {arrow('M6 4 L10 8 L6 12')}
           </button>
-        </figcaption>
+        </div>
       )}
-    </figure>
+    </div>
   )
 }

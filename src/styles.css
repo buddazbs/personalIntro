@@ -1,147 +1,178 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/literata/opsz.css';
-@import '@fontsource-variable/literata/opsz-italic.css';
+@import '@fontsource-variable/cormorant/wght.css';
+@import '@fontsource-variable/cormorant/wght-italic.css';
+@import '@fontsource-variable/manrope/wght.css';
 @import 'lenis/dist/lenis.css';
 
-/*
-  Страница — один день чая. --bg / --fg / --accent меняются при прокрутке
-  (см. src/lib/day.ts): утро — сэнтя, день — габа, вечер — дянь хун.
-*/
-:root {
-  --bg: #e4e5c0;
-  --fg: #29231a;
-  --accent: #3e5b2b;
-  --muted: color-mix(in oklab, var(--fg) 72%, var(--bg));
-  --rule: color-mix(in oklab, var(--fg) 18%, transparent);
-  --seal: #a8321e;
-  --paper: #fbf8ee;
-}
-
 @theme {
-  --font-serif: 'Literata Variable', Georgia, serif;
+  --font-serif: 'Cormorant Variable', 'Cormorant', Georgia, serif;
+  --font-sans: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
 
-  --color-bg: var(--bg);
-  --color-fg: var(--fg);
-  --color-accent: var(--accent);
-  --color-muted: var(--muted);
-  --color-rule: var(--rule);
-  --color-seal: var(--seal);
-  --color-paper: var(--paper);
-
-  /* Шкала Брингхерста: 14 / 18 / 24 / 36 / 60 / 72 */
-  --text-small: 0.875rem;
-  --text-small--line-height: 1.5;
-  --text-body: 1.125rem;
-  --text-body--line-height: 1.6;
-  --text-lead: 1.5rem;
-  --text-lead--line-height: 1.45;
-  --text-h3: 2.25rem;
-  --text-h3--line-height: 1.12;
+  --color-ink: #0e1410;
+  --color-ink-2: #141c17;
+  --color-ink-3: #1b251f;
+  --color-cream: #f3ebdd;
+  --color-cream-2: rgb(243 235 221 / 0.72);
+  --color-mute: rgb(243 235 221 / 0.5);
+  --color-line: rgb(243 235 221 / 0.1);
+  --color-matcha: #a8c686;
+  --color-matcha-deep: #5f8a4e;
+  --color-matcha-dark: #24391e;
+  --color-clay: #e39b78;
+  --color-butter: #ebcb82;
+  --color-plum: #b693b0;
+  --color-sky: #8fb9bb;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @layer base {
   html {
-    background: var(--bg);
-    color: var(--fg);
-    font-family: var(--font-serif);
-    font-size: 100%;
-    font-optical-sizing: auto;
+    background: var(--color-ink);
+    color: var(--color-cream);
+    color-scheme: dark;
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
     -webkit-tap-highlight-color: transparent;
-    font-kerning: normal;
-    scroll-padding-top: 7rem; /* фиксированная шапка не перекрывает элемент в фокусе */
-    hanging-punctuation: first;
+    scroll-padding-top: 6rem;
   }
+  h1, h2, h3 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+  a, button { touch-action: manipulation; }
 
-  body {
-    font-size: var(--text-body);
-    line-height: 1.6;
-  }
-
-  h1,
-  h2,
-  h3 {
-    text-wrap: balance;
-  }
-  p {
-    text-wrap: pretty;
-  }
-
-  a,
-  button {
-    touch-action: manipulation;
-  }
-
-  ::selection {
-    background: var(--fg);
-    color: var(--bg);
-  }
+  ::selection { background: var(--color-matcha); color: var(--color-ink); }
 
   :focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 4px;
-    border-radius: 2px;
+    outline: 2px solid var(--color-matcha);
+    outline-offset: 3px;
+    border-radius: 6px;
   }
 
+  html.has-custom-cursor,
+  html.has-custom-cursor * { cursor: none !important; }
+
   @media (pointer: fine) {
-    html {
-      overscroll-behavior: none;
-    }
+    html { overscroll-behavior: none; }
   }
 }
 
 @layer components {
-  /* Подпись к разделу: время дня и чай. Курсив, обычный регистр. */
-  .steep {
-    font-size: var(--text-small);
-    font-style: italic;
-    color: var(--muted);
+  .kicker {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
   }
 
-  .link {
-    text-decoration-line: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 0.22em;
-    text-decoration-color: var(--rule);
-    transition: text-decoration-color 0.3s ease, color 0.3s ease;
+  .glass {
+    background: linear-gradient(160deg, rgb(243 235 221 / 0.065), rgb(243 235 221 / 0.02));
+    border: 1px solid var(--color-line);
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
   }
-  .link:hover {
-    text-decoration-color: currentColor;
+
+  /* Подсветка и светящийся бордер, следующие за курсором */
+  .spotlight::before,
+  .spotlight::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .spotlight::before {
+    background: radial-gradient(28rem circle at var(--mx, 50%) var(--my, 50%), rgb(168 198 134 / 0.14), transparent 45%);
+    z-index: 1;
+  }
+  .spotlight::after {
+    padding: 1px;
+    background: radial-gradient(18rem circle at var(--mx, 50%) var(--my, 50%), rgb(168 198 134 / 0.6), transparent 50%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    z-index: 3;
+  }
+  .spotlight:hover::before,
+  .spotlight:hover::after { opacity: 1; }
+
+  .text-gradient {
+    background: linear-gradient(100deg, var(--color-matcha) 0%, var(--color-butter) 55%, var(--color-clay) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Градиент, который медленно течёт — для акцентов */
+  .text-flow {
+    background: linear-gradient(100deg, var(--color-matcha), var(--color-butter), var(--color-clay), var(--color-matcha));
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: flow 8s linear infinite;
   }
 
   .skip-link {
     position: fixed;
     left: 1rem;
     top: -4rem;
-    z-index: 100;
+    z-index: 200;
     padding: 0.6rem 1rem;
-    background: var(--fg);
-    color: var(--bg);
-    font-size: var(--text-small);
+    border-radius: 999px;
+    background: var(--color-cream);
+    color: var(--color-ink);
+    font-size: 0.875rem;
     transition: top 0.2s ease;
   }
-  .skip-link:focus {
-    top: 1rem;
-  }
+  .skip-link:focus { top: 1rem; }
 }
 
-/* Волокна бумаги: статичная текстура поверх фона, без анимации */
-.paper {
+@keyframes flow { to { background-position: 300% 0; } }
+
+/* Плёночное зерно */
+.grain {
   position: fixed;
-  inset: 0;
+  inset: -50%;
   z-index: 60;
   pointer-events: none;
-  opacity: 0.35;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.28 0 0 0 0 0.18 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 1.2s steps(6) infinite;
+}
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -3%); }
+  60% { transform: translate(-2%, -1%); }
+  80% { transform: translate(3%, 3%); }
+  100% { transform: translate(0, 0); }
 }
 
-.no-scrollbar {
-  scrollbar-width: none;
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.6); opacity: 0; }
 }
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+.pulse-dot { position: relative; }
+.pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: inherit;
+  animation: pulse-ring 1.8s var(--ease-out-expo) infinite;
+}
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+html[data-paused] .grain,
+html[data-paused] .pulse-dot::after,
+html[data-paused] .text-flow { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .grain, .pulse-dot::after, .text-flow { animation: none; }
 }
