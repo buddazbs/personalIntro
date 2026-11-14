@@ -1,0 +1,18 @@
+# Cloudflare Worker: анкета «записаться на свидание» → Telegram.
+# Секреты: заполнить worker/.env (шаблон — .env.example) и выполнить `npm run secrets`.
+# Или по одному (в git не попадают):
+#   npx wrangler secret put TELEGRAM_TOKEN
+#   npx wrangler secret put TELEGRAM_CHAT_ID
+name = "date-request"
+main = "src/index.ts"
+compatibility_date = "2025-10-01"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGINS = "https://buddazbs.github.io,http://localhost:5173"
+
+# не больше 5 отправок в минуту с одного IP
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }

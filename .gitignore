@@ -12,3 +12,10 @@ dist
 # файлы, не относящиеся к проекту
 .DS_Store
 skills-lock.json
+
+# секреты Worker'а для локального запуска
+.dev.vars
+# секреты (бот Telegram и т.п.) — в git попадают только шаблоны
+.env
+.env.*
+!.env.example
