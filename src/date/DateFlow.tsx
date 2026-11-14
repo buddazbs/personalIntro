@@ -4,7 +4,7 @@ import { EASE } from '../lib/colors'
 import { SplitHeading } from '../components/Reveal'
 import { Calendar } from './Calendar'
 import { Cups } from './Cups'
-import { CUISINES, emptyRequest, FORMATS, formatMessage, LIMITS, normalizeNick, validate, type DateRequest, type Errors, type Field } from './schema'
+import { CUISINES, emptyRequest, FORMATS, formatLabel, formatMessage, LIMITS, normalizeNick, validate, type DateRequest, type Errors, type Field } from './schema'
 import { humanDate, slotsFor, TZ_LABEL } from './schedule'
 
 /**
@@ -22,7 +22,7 @@ type Status = { kind: 'idle' | 'sending' | 'done' } | { kind: 'error'; message: 
 const STEPS = [
   { kicker: 'приглашение', title: 'давай встретимся', fields: [] },
   { kicker: 'вкусы', title: 'что тебе по вкусу', fields: ['cuisines'] },
-  { kicker: 'настроение', title: 'каким будет вечер', fields: ['format'] },
+  { kicker: 'настроение', title: 'каким будет вечер', fields: ['format', 'formatOwn'] },
   { kicker: 'время', title: 'когда тебе удобно', fields: ['date', 'time'] },
   { kicker: 'контакт', title: 'как тебя найти', fields: ['nick'] },
   { kicker: 'почти всё', title: 'всё верно', fields: [] },
@@ -138,6 +138,7 @@ export default function DateFlow({ onClose }: { onClose: () => void }) {
   const [status, setStatus] = useState<Status>({ kind: 'idle' })
   const [custom, setCustom] = useState('')
   const honeypot = useRef<HTMLInputElement>(null)
+  const ownRef = useRef<HTMLInputElement>(null)
   const scroller = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -234,7 +235,7 @@ export default function DateFlow({ onClose }: { onClose: () => void }) {
   const done = status.kind === 'done'
   const progress = done ? 1 : step / (STEPS.length - 1)
   const current = STEPS[step] ?? STEPS[0]
-  const formatTitle = FORMATS.find((f) => f.id === req.format)?.title
+  const formatTitle = req.format ? formatLabel(req) : undefined
 
   return (
     <div className="absolute inset-0">
@@ -379,18 +380,52 @@ export default function DateFlow({ onClose }: { onClose: () => void }) {
                             type="button"
                             role="radio"
                             aria-checked={on}
-                            onClick={() => set('format', f.id)}
+                            onClick={() => {
+                              set('format', f.id)
+                              // свой вариант: сразу ставим курсор в поле, когда оно раскроется
+                              if (f.id === 'own') setTimeout(() => ownRef.current?.focus({ preventScroll: true }), 350)
+                            }}
                             whileTap={{ scale: 0.98 }}
-                            className={`relative overflow-hidden rounded-3xl border p-5 text-left transition-colors duration-300 ${on ? 'border-clay/70' : 'border-line hover:border-cream/25'} ${f.id === 'surprise' ? 'sm:col-span-2' : ''}`}
+                            className={`relative overflow-hidden rounded-3xl border p-5 text-left transition-colors duration-300 ${on ? 'border-clay/70' : 'border-line hover:border-cream/25'} ${f.id === 'own' ? 'border-dashed sm:col-span-2' : ''}`}
                           >
                             {on && <motion.span layoutId="format-bg" className="absolute inset-0 bg-gradient-to-br from-clay/20 via-plum/10 to-transparent" transition={{ type: 'spring', stiffness: 380, damping: 34 }} />}
-                            <span className="relative block font-serif text-[1.65rem] leading-tight">{f.title}</span>
+                            <span className="relative flex items-center gap-2.5 font-serif text-[1.65rem] leading-tight">
+                              {f.id === 'own' && <span className={`grid h-6 w-6 place-items-center rounded-full border text-base leading-none transition-transform duration-500 ${on ? 'border-clay bg-clay text-ink' : 'border-cream/30 text-cream-2'}`}>+</span>}
+                              {f.title}
+                            </span>
                             <span className="relative mt-1 block text-sm text-cream-2">{f.hint}</span>
                           </motion.button>
                         )
                       })}
                     </div>
                     <FieldError text={errors.format} />
+                    <AnimatePresence initial={false}>
+                      {req.format === 'own' && (
+                        <motion.label
+                          key="own"
+                          className="block overflow-hidden"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.5, ease: EASE }}
+                        >
+                          <div className="pt-6">
+                            <Label hint={`${req.formatOwn.length} / ${LIMITS.formatOwn}`}>твой вариант</Label>
+                            <input
+                              ref={ownRef}
+                              className={errors.formatOwn ? inputCls.replace('border-line', 'border-clay/70') : inputCls}
+                              value={req.formatOwn}
+                              maxLength={LIMITS.formatOwn}
+                              onChange={(e) => set('formatOwn', e.target.value)}
+                              onKeyDown={onEnter}
+                              placeholder="например, каток и горячий шоколад"
+                              aria-invalid={!!errors.formatOwn}
+                            />
+                            <FieldError text={errors.formatOwn} />
+                          </div>
+                        </motion.label>
+                      )}
+                    </AnimatePresence>
                   </div>
                 )}
 

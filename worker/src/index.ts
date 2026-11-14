@@ -5,7 +5,9 @@
  * Защита без сторонних скриптов на сайте: проверка Origin, поле-ловушка, минимальное время
  * заполнения, лимит запросов с IP и повторная проверка всех полей и расписания.
  */
-import { formatMessage, validate } from '../../src/date/schema'
+import { formatMessage, orderNumber, validate, widgetCaption, widgetData } from '../../src/date/schema'
+// HTML-виджет «чек из чайной»; wrangler импортирует .html как строку
+import WIDGET_HTML from './widget.html'
 
 interface RateLimit {
   limit(o: { key: string }): Promise<{ success: boolean }>
@@ -18,6 +20,8 @@ export interface Env {
   ALLOWED_ORIGINS: string
   /** "1" — не отправлять, а вернуть текст сообщения (для проверки) */
   DRY_RUN?: string
+  /** "0" — слать обычным текстом, без интерактивного виджета */
+  WIDGET?: string
   LIMITER?: RateLimit
 }
 
@@ -61,17 +65,28 @@ export default {
     if (Object.keys(errors).length) return json({ error: 'invalid', fields: errors }, 422, cors)
 
     const text = formatMessage(data)
-    if (env.DRY_RUN === '1') return json({ ok: true, preview: text }, 200, cors)
+    const no = orderNumber()
+    const widget = { chat_id: env.TELEGRAM_CHAT_ID, html: WIDGET_HTML, chat_data: widgetData(data, no), caption: widgetCaption(data, no) }
+    if (env.DRY_RUN === '1') return json({ ok: true, preview: text, widget: { chat_data: widget.chat_data, caption: widget.caption } }, 200, cors)
 
-    const tg = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true } }),
-    })
-    if (!tg.ok) {
-      console.error('telegram', tg.status, await tg.text())
+    // сначала интерактивный «чек» (Bot API 10.4); если клиент/API его не принял — обычным сообщением
+    if (env.WIDGET !== '0') {
+      const res = await tg(env, 'sendWidget', widget)
+      if (res.ok) return json({ ok: true }, 200, cors)
+      console.error('sendWidget', res.status, await res.text())
+    }
+    const res = await tg(env, 'sendMessage', { chat_id: env.TELEGRAM_CHAT_ID, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true } })
+    if (!res.ok) {
+      console.error('sendMessage', res.status, await res.text())
       return json({ error: 'telegram' }, 502, cors)
     }
     return json({ ok: true }, 200, cors)
   },
 }
+
+const tg = (env: Env, method: string, body: unknown) =>
+  fetch(`https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/${method}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })

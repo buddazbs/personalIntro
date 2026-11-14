@@ -62,6 +62,10 @@ cd worker && npx wrangler dev --port 8790 --var DRY_RUN:1 --var TELEGRAM_TOKEN:x
 VITE_DATE_ENDPOINT=http://localhost:8790 npm run dev   # в другом терминале, из корня
 ```
 
+Сообщение приходит интерактивным виджетом-«чеком» (Bot API 10.4, `sendWidget`): вёрстка в
+`worker/src/widget.html`, лимит Telegram — 4096 байт после сжатия (`npm run widget:size`).
+Если виджет не отправился, Worker шлёт обычное текстовое сообщение; `WIDGET=0` — сразу текстом.
+
 Раз в год, когда выходит производственный календарь, стоит дополнить `EXTRA_DAYS_OFF` в
 `src/date/schedule.ts` переносами выходных (обычные праздники и переносы с выходных считаются сами).
 

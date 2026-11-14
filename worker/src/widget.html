@@ -1,0 +1,75 @@
+<style>
+body{margin:0;font:15px/1.35 system-ui,sans-serif}
+.w{padding:10px 10px 6px}
+.r{position:relative;padding:16px 16px 18px;background:#f6eedf;color:#2c2521;border-radius:8px 8px 0 0;box-shadow:0 8px 20px rgba(0,0,0,.28);animation:in .7s cubic-bezier(.16,1,.3,1) both}
+.r:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:8px;background:radial-gradient(circle at 6px 0,#f6eedf 6px,transparent 6.5px) 0 0/12px 8px repeat-x}
+@keyframes in{from{opacity:0;transform:translateY(10px)}}
+.k{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#9a8a7c}
+.h{display:flex;justify-content:space-between;align-items:flex-end;margin-top:4px}
+h1{margin:0;font:400 26px/1 serif}
+.cup{width:40px;height:36px;overflow:visible}
+.cup path.s{fill:none;stroke:#b79c86;stroke-width:1.4;stroke-linecap:round;animation:st 2.6s ease-out infinite;opacity:0}
+.cup path.s+path.s{animation-delay:1.3s}
+@keyframes st{0%{opacity:0;transform:translateY(4px)}40%{opacity:.9}100%{opacity:0;transform:translateY(-7px)}}
+hr{border:0;border-top:1px dashed rgba(44,37,33,.32);margin:12px 0}
+.l{display:flex;justify-content:space-between;gap:14px;margin:6px 0;font-size:14px}
+.l b{font-weight:400;color:#9a8a7c;white-space:nowrap}
+.l span{text-align:right;word-break:break-word}
+.q{margin:10px 0 2px;padding-left:10px;border-left:2px solid #e39b78;font:italic 15px/1.35 serif;max-height:62px;overflow:hidden}
+.t{display:flex;justify-content:space-between;font:600 15px/1.2 system-ui;letter-spacing:.06em;text-transform:uppercase}
+.t i{font:italic 400 18px serif;text-transform:none;letter-spacing:0;color:#b4553a}
+.f{margin-top:6px;font-size:11px;color:#9a8a7c;text-align:center}
+.p{position:absolute;right:14px;top:58px;padding:5px 10px;border:2px solid #b4553a;border-radius:6px;color:#b4553a;font:700 15px/1 system-ui;letter-spacing:.18em;transform:rotate(-14deg) scale(1.8);opacity:0;pointer-events:none}
+.ok .p{animation:pr .45s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes pr{to{opacity:.85;transform:rotate(-14deg) scale(1)}}
+.b{display:flex;gap:8px;margin-top:16px}
+button{flex:1;padding:10px 8px;border:0;border-radius:10px;font:500 14px system-ui;background:var(--tg-theme-button-color,#e39b78);color:var(--tg-theme-button-text-color,#fff);transition:transform .15s,opacity .3s}
+button:active{transform:scale(.96)}
+button+button{background:var(--tg-theme-secondary-bg-color,rgba(127,127,127,.18));color:var(--tg-theme-text-color,inherit)}
+.ok #a{opacity:.55}
+[hidden]{display:none}
+</style>
+<div class="w" id="w">
+<div class="r">
+<div class="k">чайная «двое» · <span id="at"></span></div>
+<div class="h"><h1>Заказ № <span id="no"></span></h1>
+<svg class="cup" viewBox="0 0 40 36"><path class="s" d="M15 12c-3-4 3-6 0-10"/><path class="s" d="M24 12c-3-4 3-6 0-10"/><path d="M5 16h30c-1 10-7 17-15 17S6 26 5 16z" fill="#a8c686" stroke="#2c2521" stroke-opacity=".5"/></svg></div>
+<hr>
+<div class="l"><b>гость</b><span id="g"></span></div>
+<div class="l"><b>когда</b><span id="wn"></span></div>
+<div class="l"><b id="fl">формат</b><span id="f"></span></div>
+<div class="l"><b>кухня</b><span id="c"></span></div>
+<div class="l" id="ar"><b>без</b><span id="a2"></span></div>
+<div class="q" id="m"></div>
+<hr>
+<div class="t">итого<i>1 вечер ♡</i></div>
+<div class="f">оплата — хорошим настроением</div>
+<div class="p">принято</div>
+</div>
+<div class="b"><button id="a">Принять заказ</button><button id="x"></button></div>
+</div>
+<script>
+var W=window.TelegramWidget||{},d={},$=function(i){return document.getElementById(i)},w=$("w");
+function put(i,v){$(i).textContent=v||""}
+function draw(){
+try{d=JSON.parse(W.chatData||"{}")||{}}catch(e){d={}}
+put("no",d.no);put("at",d.at);put("wn",d.w);put("f",d.f);put("c",d.c);put("a2",d.a);
+put("fl",d.o?"свой вариант":"формат");
+put("g",(d.n?d.n+" · ":"")+"@"+(d.k||""));
+$("ar").hidden=!d.a;
+$("m").hidden=!d.m;put("m",d.m?"«"+d.m+"»":"");
+put("x","Написать ✉");
+}
+function ok(on){w.classList.toggle("ok",on);put("a",on?"Принято ✓":"Принять заказ")}
+var s=false;try{s=localStorage.getItem("ok")==="1"}catch(e){}
+draw();ok(s);
+$("a").onclick=function(){
+if(s)return;s=true;ok(true);
+try{localStorage.setItem("ok","1")}catch(e){}
+var h=W.HapticFeedback;h&&h.notificationOccurred&&h.notificationOccurred("success");
+};
+$("x").onclick=function(){d.k&&W.openTelegramLink&&W.openTelegramLink("https://t.me/"+d.k)};
+$("g").onclick=function(){d.k&&W.copyText&&W.copyText("@"+d.k)};
+W.onEvent&&W.onEvent("chatDataChanged",draw);
+W.ready&&W.ready();
+</script>
