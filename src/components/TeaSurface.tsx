@@ -1,10 +1,12 @@
-import { useAnimationFrame, useScroll, useSpring, useVelocity } from 'motion/react'
+import { useAnimationFrame, useInView, useScroll, useSpring, useVelocity } from 'motion/react'
 import { useRef } from 'react'
 import { useReducedMotionPref } from '../hooks/useMedia'
 
 /** Поверхность чая между разделами: три волны, которые волнуются от скорости прокрутки */
 export function TeaSurface({ className = '' }: { className?: string }) {
   const paths = useRef<(SVGPathElement | null)[]>([])
+  const svg = useRef<SVGSVGElement>(null)
+  const inView = useInView(svg, { margin: '100px 0px' })
   const reduced = useReducedMotionPref()
   const { scrollY } = useScroll()
   const velocity = useSpring(useVelocity(scrollY), { stiffness: 80, damping: 20 })
@@ -21,7 +23,9 @@ export function TeaSurface({ className = '' }: { className?: string }) {
   }
 
   useAnimationFrame((time) => {
-    if (reduced && time > 0 && paths.current[0]?.getAttribute('d')) return
+    // вне экрана не пересчитываем пути (но первый кадр рисуем всегда)
+    const drawn = !!paths.current[0]?.getAttribute('d')
+    if (drawn && (reduced || !inView)) return
     const v = Math.min(1, Math.abs(velocity.get()) / 2500)
     const t = time / 900
     const amp = 6 + v * 34
@@ -29,7 +33,7 @@ export function TeaSurface({ className = '' }: { className?: string }) {
   })
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden className={`block h-20 w-full md:h-28 ${className}`}>
+    <svg ref={svg} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden className={`block h-20 w-full md:h-28 ${className}`}>
       <defs>
         <linearGradient id="ts-grad" x1="0" x2="1">
           <stop offset="0" stopColor="#A8C686" stopOpacity="0" />

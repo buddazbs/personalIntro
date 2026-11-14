@@ -2,7 +2,7 @@ import { motion, useScroll, useTransform, type MotionValue } from 'motion/react'
 import { useEffect, useRef, type RefObject } from 'react'
 import { NAME } from '../content'
 import { EASE } from '../lib/colors'
-import { InkShader } from '../components/InkShader'
+import { MatchaFog } from '../components/MatchaFog'
 import { PhotoStack } from '../components/PhotoStack'
 import { Scramble } from '../components/Reveal'
 import { useDesktop, useFinePointer, useReducedMotionPref } from '../hooks/useMedia'
@@ -115,7 +115,7 @@ export function Hero({ ready }: { ready: boolean }) {
     <div ref={wrap} className="relative md:h-[170svh]">
       <section id="hero" aria-labelledby="hero-title" className="relative min-h-svh overflow-hidden md:sticky md:top-0 md:h-svh">
         <motion.div className="absolute inset-0 origin-top overflow-hidden" style={{ scale, borderRadius: radius, opacity: dim }}>
-          <InkShader />
+          <MatchaFog />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-transparent to-ink" />
         </motion.div>
 

@@ -72,7 +72,8 @@ export function LeafField({ className = '' }: { className?: string }) {
 
     const count = w < 768 ? 18 : 42
     const leaves = Array.from({ length: count }, () => spawn(w, h, true))
-    const mouse = { x: -9999, y: -9999 }
+    // vx, vy — сглаженная скорость курсора (px за кадр): листья подхватывает «след» от руки
+    const mouse = { x: -9999, y: -9999, px: -9999, py: -9999, vx: 0, vy: 0 }
     const onMove = (e: PointerEvent) => {
       const r = canvas.getBoundingClientRect()
       mouse.x = e.clientX - r.left
@@ -80,35 +81,54 @@ export function LeafField({ className = '' }: { className?: string }) {
     }
     window.addEventListener('pointermove', onMove, { passive: true })
 
+    const R = 170
     let raf = 0
     let last = performance.now()
+    let lastScroll = window.scrollY
+    let scrollV = 0
     const tick = (now: number) => {
       const dt = Math.min(2, (now - last) / 16.67)
       last = now
+
+      if (mouse.px > -9000) {
+        const k = 1 - Math.exp(-0.35 * dt)
+        mouse.vx += ((mouse.x - mouse.px) / dt - mouse.vx) * k
+        mouse.vy += ((mouse.y - mouse.py) / dt - mouse.vy) * k
+      }
+      mouse.px = mouse.x
+      mouse.py = mouse.y
+      // прокрутка: холст закреплён, поэтому листья смещаем сами — дальние меньше, ближние больше (параллакс)
+      const sy = window.scrollY
+      const ds = sy - lastScroll
+      lastScroll = sy
+      scrollV += (ds / dt - scrollV) * 0.2
+
       ctx.clearRect(0, 0, w, h)
       for (let i = 0; i < leaves.length; i++) {
         const l = leaves[i]!
-        l.phase += 0.02 * dt
+        l.phase += (0.02 + Math.min(0.08, Math.abs(scrollV) * 0.002)) * dt
         // падение + покачивание
         const sway = Math.sin(now / 1400 + l.phase * 2) * 0.35
         l.vy += (0.35 * l.depth - l.vy) * 0.02 * dt
         l.vx += (sway * l.depth - l.vx) * 0.03 * dt
-        // курсор отталкивает
+        // курсор: лёгкое отталкивание + увлечение потоком воздуха за рукой
         const dx = l.x - mouse.x
         const dy = l.y - mouse.y
         const d2 = dx * dx + dy * dy
-        if (d2 < 140 * 140) {
+        if (d2 < R * R) {
           const d = Math.sqrt(d2) || 1
-          const f = (1 - d / 140) * 1.6
-          l.vx += (dx / d) * f * dt
-          l.vy += (dy / d) * f * dt
-          l.vr += (Math.random() - 0.5) * 0.02
+          const fall = (1 - d / R) ** 2
+          l.vx += ((dx / d) * 0.5 + mouse.vx * 0.09 * l.depth) * fall * dt
+          l.vy += ((dy / d) * 0.5 + mouse.vy * 0.09 * l.depth) * fall * dt
+          // закрутка зависит от того, с какой стороны прошёл поток — без случайных рывков
+          l.vr += ((dx * mouse.vy - dy * mouse.vx) / d) * 0.0012 * fall * dt
         }
-        l.vr *= 0.99
+        l.vr = Math.max(-0.15, Math.min(0.15, l.vr * 0.985))
         l.x += l.vx * dt
-        l.y += l.vy * dt
+        l.y += l.vy * dt - ds * l.depth * 0.45
         l.rot += (l.vr + l.vx * 0.01) * dt
-        if (l.y > h + 30 || l.x < -40 || l.x > w + 40) leaves[i] = spawn(w, h, false)
+        if (l.y < -60) l.y += h + 100
+        else if (l.y > h + 40 || l.x < -40 || l.x > w + 40) leaves[i] = spawn(w, h, false)
         drawLeaf(ctx, l)
       }
       raf = document.hidden ? 0 : requestAnimationFrame(tick)
