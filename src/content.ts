@@ -109,4 +109,4 @@ export const socials = [
   { id: 'ig', label: 'Instagram', handle: '@buddazbs', href: 'https://instagram.com/buddazbs', accent: 'clay' },
 ] as const
 
-export const privacyChips = ['без cookie', 'без аналитики', 'без трекеров', 'без сбора данных', '152-ФЗ'] as const
+export const privacyChips = ['без cookie', 'без аналитики', 'без трекеров', 'анкета — только по желанию', '152-ФЗ'] as const

@@ -7,6 +7,7 @@ import { Magnetic } from '../components/Magnetic'
 import { Signature } from '../components/Signature'
 import { Ghost } from '../components/Ghost'
 import { useScrollTo } from '../lib/lenis'
+import { openDate } from '../lib/route'
 
 const icons = {
   tg: (
@@ -82,6 +83,73 @@ function SocialCard({ s }: { s: Social }) {
   )
 }
 
+/**
+ * Приглашение на свидание: широкая карточка под соцсетями. Тёплое свечение следует за курсором,
+ * пиалы сближаются при наведении; по клику анкета раскрывается кругом из точки нажатия.
+ */
+function DateCard() {
+  const [hover, setHover] = useState(false)
+  const [glow, setGlow] = useState({ x: '70%', y: '50%' })
+  const track = (e: PointerEvent<HTMLButtonElement>) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    setGlow({ x: `${e.clientX - r.left}px`, y: `${e.clientY - r.top}px` })
+  }
+  return (
+    <Magnetic strength={0.06}>
+      <button
+        type="button"
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect()
+          // клик с клавиатуры приходит с нулевыми координатами — раскрываем из центра карточки
+          openDate(e.clientX || e.clientY ? { x: e.clientX, y: e.clientY } : { x: r.left + r.width / 2, y: r.top + r.height / 2 })
+        }}
+        onPointerEnter={() => setHover(true)}
+        onPointerLeave={() => setHover(false)}
+        onPointerMove={track}
+        onFocus={() => setHover(true)}
+        onBlur={() => setHover(false)}
+        data-cursor="записаться"
+        aria-haspopup="dialog"
+        className="group relative grid w-full grid-cols-1 items-center gap-8 overflow-hidden rounded-[2rem] border border-clay/25 bg-gradient-to-br from-plum/[0.12] via-ink-2 to-clay/[0.1] p-7 text-left sm:p-9 md:grid-cols-[1fr_auto] md:gap-12"
+      >
+        <motion.span
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{ background: `radial-gradient(28rem circle at ${glow.x} ${glow.y}, rgba(227,155,120,0.18), transparent 60%)` }}
+          initial={false}
+          animate={{ opacity: hover ? 1 : 0.35 }}
+          transition={{ duration: 0.6 }}
+        />
+        <div className="relative">
+          <div className="flex items-center gap-3">
+            <span className="h-px w-10 bg-clay" />
+            <span className="kicker text-[0.6rem] text-clay">приглашение</span>
+          </div>
+          <div className="mt-5 font-serif text-[clamp(2.3rem,5vw,4rem)] leading-[0.98] font-light tracking-[-0.02em]">
+            Записаться <span className="text-gradient pr-[0.05em] italic">на свидание</span>
+          </div>
+          <p className="mt-4 max-w-xl text-[0.98rem] leading-relaxed text-cream-2">Пять коротких вопросов: вкусы, настроение, удобное время — и как тебя найти. Остальное — моя забота.</p>
+        </div>
+        <div className="relative flex items-center gap-6 md:flex-col md:items-end">
+          <svg width="132" height="56" viewBox="0 0 132 56" fill="none" aria-hidden className="overflow-visible">
+            {[-1, 1].map((side) => (
+              <motion.g key={side} initial={false} animate={{ x: hover ? side * 2 : side * 14, rotate: hover ? -side * 7 : 0 }} transition={{ duration: 0.9, ease: EASE }} style={{ originX: '66px', originY: '50px' }}>
+                <path d="M44 22 C 45 38, 54 46, 66 46 C 78 46, 87 38, 88 22 Z" fill={side < 0 ? C.matcha : C.clay} fillOpacity="0.18" stroke={C.cream} strokeOpacity="0.55" strokeWidth="1.2" />
+                <ellipse cx="66" cy="22" rx="22" ry="2.6" stroke={C.cream} strokeOpacity="0.3" />
+              </motion.g>
+            ))}
+          </svg>
+          <span className="grid h-14 w-14 place-items-center rounded-full border border-clay/40 text-clay transition-all duration-500 group-hover:border-transparent group-hover:bg-clay group-hover:text-ink">
+            <svg width="16" height="16" viewBox="0 0 12 12" fill="none" aria-hidden>
+              <path d="M1.5 6 H10.5 M7 2.5 L10.5 6 L7 9.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </div>
+      </button>
+    </Magnetic>
+  )
+}
+
 export function Contact() {
   return (
     <section id="contact" className="relative isolate mx-auto max-w-7xl scroll-mt-24 px-5 pt-24 pb-16 sm:px-8 md:pt-32 md:pb-20">
@@ -98,6 +166,9 @@ export function Contact() {
             <SocialCard s={s} />
           </Reveal>
         ))}
+        <Reveal delay={0.3} className="md:col-span-2">
+          <DateCard />
+        </Reveal>
       </div>
     </section>
   )
@@ -160,11 +231,15 @@ export function Footer() {
             <div className="kicker text-[0.6rem] text-mute">приватность</div>
           </div>
           <div>
-            <p className="font-serif text-xl leading-snug italic">Этот сайт не использует cookie и не собирает персональные данные.</p>
+            <p className="font-serif text-xl leading-snug italic">Этот сайт не использует cookie и не следит за посетителями.</p>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-cream-2">
               В соответствии с Федеральным законом №&nbsp;152-ФЗ «О персональных данных» уведомляем: на сайте не устанавливаются куки-файлы, не используются системы аналитики,
-              рекламные пиксели и счётчики посещений. Не ведётся сбор, обработка, хранение или передача персональных данных пользователей третьим лицам. Все ресурсы (шрифты,
-              изображения, скрипты) загружаются с этого же домена — сторонние сервисы не подключаются.
+              рекламные пиксели и счётчики посещений. Все ресурсы (шрифты, изображения, скрипты) загружаются с этого же домена — сторонние сервисы не подключаются.
+            </p>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-cream-2">
+              Единственное исключение — анкета «Записаться на свидание». Если вы сами заполните и отправите её, указанные в ней данные (имя, ник в Telegram, предпочтения, дата
+              и время) один раз передаются Ивану в Telegram через сервер-посредник Cloudflare. На сайте и на сервере анкета не сохраняется; черновик хранится только в
+              вашей вкладке браузера до её закрытия. Отправляя анкету, вы соглашаетесь на такую передачу.
             </p>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-cream-2">
               Если вы напишете по контактам выше — переписка ведётся в выбранной вами платформе на её условиях; этот сайт в ней не участвует.

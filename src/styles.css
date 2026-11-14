@@ -152,6 +152,22 @@
   100% { transform: translate(0, 0); }
 }
 
+/* Пылинки в тёплом свете на фоне анкеты (см. date/DateFlow) */
+.mote {
+  position: absolute;
+  bottom: -12px;
+  border-radius: 999px;
+  background: rgb(235 203 130 / 0.55);
+  box-shadow: 0 0 6px rgb(235 203 130 / 0.5);
+  animation: mote var(--t) linear var(--d) infinite;
+}
+@keyframes mote {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  15% { opacity: 0.8; }
+  85% { opacity: 0.5; }
+  100% { transform: translate3d(var(--dx), -110vh, 0); opacity: 0; }
+}
+
 /* Волна от клика (см. Cursor) */
 .cursor-ripple {
   position: absolute;
@@ -189,5 +205,6 @@ html[data-paused] .pulse-dot::after,
 html[data-paused] .text-flow { animation-play-state: paused; }
 
 @media (prefers-reduced-motion: reduce) {
-  .grain, .pulse-dot::after, .text-flow { animation: none; }
+  .grain, .pulse-dot::after, .text-flow, .mote { animation: none; }
+  .mote { display: none; }
 }

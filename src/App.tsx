@@ -1,6 +1,8 @@
-import { MotionConfig } from 'motion/react'
+import { AnimatePresence, MotionConfig } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
 import { LenisProvider, useLenis } from './lib/lenis'
+import { useDateRoute } from './lib/route'
+import { DateOverlay } from './date/DateOverlay'
 import { usePageVisibility } from './hooks/usePageVisibility'
 import { Preloader } from './components/Preloader'
 import { Cursor } from './components/Cursor'
@@ -16,13 +18,14 @@ import { Contact, Footer } from './sections/Contact'
 function Page() {
   const [ready, setReady] = useState(false)
   const lenis = useLenis()
+  const dateOpen = useDateRoute()
   usePageVisibility()
 
-  // пока заваривается — страница не листается
+  // пока заваривается или открыта анкета — страница не листается
   useEffect(() => {
-    if (ready) lenis?.start()
+    if (ready && !dateOpen) lenis?.start()
     else lenis?.stop()
-  }, [ready, lenis])
+  }, [ready, dateOpen, lenis])
 
   const onDone = useCallback(() => setReady(true), [])
 
@@ -61,6 +64,7 @@ function Page() {
       </main>
 
       <PrivacyPill ready={ready} />
+      <AnimatePresence>{dateOpen && <DateOverlay key="date" />}</AnimatePresence>
       <div className="grain" aria-hidden />
     </div>
   )

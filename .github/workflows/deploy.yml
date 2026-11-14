@@ -27,6 +27,9 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+        env:
+          # адрес Worker'а анкеты: Settings → Secrets and variables → Actions → Variables → DATE_ENDPOINT
+          VITE_DATE_ENDPOINT: ${{ vars.DATE_ENDPOINT }}
 
       - uses: peaceiris/actions-gh-pages@v4
         with:

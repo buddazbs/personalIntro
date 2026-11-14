@@ -122,7 +122,7 @@ export function PrivacyPill({ ready }: { ready: boolean }) {
               <path d="M7 1 L12 3 V7 C12 10 9.8 12 7 12.8 C4.2 12 2 10 2 7 V3 Z" stroke="currentColor" strokeWidth="1.2" />
             </svg>
           </span>
-          <span className="text-[0.78rem] leading-snug text-cream-2">Сайт не использует cookie и не собирает данные.</span>
+          <span className="text-[0.78rem] leading-snug text-cream-2">Без cookie и аналитики. Данные уходят, только если отправить анкету.</span>
           <button type="button" onClick={() => setOpen(false)} aria-label="Скрыть уведомление" className="ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-full text-mute transition-colors hover:bg-cream/10 hover:text-cream">
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
               <path d="M1 1 L9 9 M9 1 L1 9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
